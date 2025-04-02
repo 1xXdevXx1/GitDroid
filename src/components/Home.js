@@ -8,28 +8,42 @@ const Home = () => {
       name: 'Snapdragon V2',
       price: 350,
       rating: 4.6,
-      image: 'https://via.placeholder.com/200x200?text=Snapdragon+V2'
+      image: 'https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=500&h=500&fit=crop'
     },
     {
       id: 2,
       name: 'Gaming Phone',
       price: 450,
       rating: 4.7,
-      image: 'https://via.placeholder.com/200x200?text=Gaming+Phone'
+      image: 'https://images.unsplash.com/photo-1616348436168-de43ad0db179?w=500&h=500&fit=crop'
     },
     {
       id: 3,
       name: 'SmartCAM phone',
       price: 300,
       rating: 4.5,
-      image: 'https://via.placeholder.com/200x200?text=SmartCAM+Phone'
+      image: 'https://images.unsplash.com/photo-1585060544812-6b45742d762f?w=500&h=500&fit=crop'
     },
     {
       id: 4,
       name: 'Business Phone',
       price: 220,
       rating: 4.3,
-      image: 'https://via.placeholder.com/200x200?text=Business+Phone'
+      image: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=500&h=500&fit=crop'
+    },
+    {
+      id: 5,
+      name: 'Pro Max',
+      price: 550,
+      rating: 4.8,
+      image: 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=500&h=500&fit=crop'
+    },
+    {
+      id: 6,
+      name: 'Ultra Premium',
+      price: 650,
+      rating: 4.9,
+      image: 'https://images.unsplash.com/photo-1574944985070-8f3ebc6b79d2?w=500&h=500&fit=crop'
     }
   ];
 
@@ -97,4 +111,6 @@ const Home = () => {
 };
 
 export default Home;
+
+
 
