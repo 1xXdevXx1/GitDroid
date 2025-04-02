@@ -1,183 +1,779 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-const Customization = () => {
+const Checkout = () => {
+  const location = useLocation();
   const navigate = useNavigate();
-
-  // Define hardware options for each category.
-  const hardwareOptions = {
-    camera: [
-      { id: 1, name: '12MP Camera', price: 50, description: 'High quality 12MP camera for stunning photos.' },
-      { id: 2, name: '48MP Camera', price: 100, description: 'Ultra HD 48MP camera with excellent low-light performance.' },
-      { id: 3, name: '108MP Camera', price: 150, description: 'Professional 108MP camera for advanced photography.' }
-    ],
-    processor: [
-      { id: 1, name: 'Snapdragon 888', price: 200, description: 'High performance chipset for intensive tasks.' },
-      { id: 2, name: 'Exynos 2100', price: 180, description: 'Efficient and powerful chipset for smooth performance.' }
-    ],
-    display: [
-      { id: 1, name: '6.1" OLED', price: 100, description: 'Vivid colors and deep blacks with an OLED panel.' },
-      { id: 2, name: '6.7" AMOLED', price: 150, description: 'Larger AMOLED display with vibrant visuals.' }
-    ],
-    ram: [
-      { id: 1, name: '8GB RAM', price: 50, description: 'Standard memory configuration for everyday tasks.' },
-      { id: 2, name: '12GB RAM', price: 80, description: 'Extra memory for heavy multitasking and gaming.' }
-    ],
-    rom: [
-      { id: 1, name: '128GB Storage', price: 60, description: 'Ample storage space for apps, photos, and more.' },
-      { id: 2, name: '256GB Storage', price: 100, description: 'Large storage capacity for extensive media and files.' }
-    ]
-  };
-
-  // Manage state for selected options; default selections provided.
-  const [selectedOptions, setSelectedOptions] = useState({
-    camera: hardwareOptions.camera[0],
-    processor: hardwareOptions.processor[0],
-    display: hardwareOptions.display[0],
-    ram: hardwareOptions.ram[0],
-    rom: hardwareOptions.rom[0]
+  const [selectedPhones, setSelectedPhones] = useState([]);
+  const [paymentMethod, setPaymentMethod] = useState('credit_card');
+  const [showThankYou, setShowThankYou] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    cardNumber: '',
+    expiryDate: '',
+    cvv: '',
+    upiId: '',
+    bankName: '',
+    accountNumber: ''
   });
+  const [showCVV, setShowCVV] = useState(false);
 
-  // Manage hover state for an option (for hover effects).
-  const [hoveredOption, setHoveredOption] = useState({ category: null, id: null });
+  useEffect(() => {
+    if (location.state?.selectedPhones) {
+      setSelectedPhones(location.state.selectedPhones);
+    } else {
+      navigate('/cart');
+    }
+  }, [location.state, navigate]);
 
-  // Base price for the phone.
-  const basePrice = 300;
-
-  // Total price = base price + price of each selected option.
-  const totalPrice = basePrice +
-    selectedOptions.camera.price +
-    selectedOptions.processor.price +
-    selectedOptions.display.price +
-    selectedOptions.ram.price +
-    selectedOptions.rom.price;
-
-  // Handler to update the selected option for a given category.
-  const handleOptionSelect = (category, option) => {
-    setSelectedOptions(prev => ({ ...prev, [category]: option }));
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
-  // Save the design in localStorage and navigate to Cart page.
-  const handleSaveDesign = () => {
-    const phoneConfig = {
-      camera: selectedOptions.camera,
-      processor: selectedOptions.processor,
-      display: selectedOptions.display,
-      ram: selectedOptions.ram,
-      rom: selectedOptions.rom,
-      totalPrice
-    };
+  const handlePaymentMethodChange = (e) => {
+    setPaymentMethod(e.target.value);
+  };
 
-    // Retrieve current cart from localStorage (or create a new array).
-    let cart = JSON.parse(localStorage.getItem('cart')) || [];
-    cart.push(phoneConfig);
-    localStorage.setItem('cart', JSON.stringify(cart));
+  const calculateTotal = () => {
+    return selectedPhones.reduce((total, phone) => total + phone.totalPrice, 0);
+  };
 
-    // Navigate to the cart page to view the saved phone.
-    navigate('/cart');
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // Validate phone number
+    const phoneNumber = formData.phone.replace(/\D/g, ''); // Remove non-digits
+    if (phoneNumber.length !== 10) {
+      alert('Please enter a valid 10-digit phone number');
+      return;
+    }
+
+    // Validate CVV
+    const cvv = formData.cvv.replace(/\D/g, '');
+    if (cvv.length < 3 || cvv.length > 4) {
+      alert('Please enter a valid CVV (3-4 digits)');
+      return;
+    }
+    
+    setShowThankYou(true);
+    localStorage.removeItem('cart');
+    
+    setTimeout(() => {
+      navigate('/');
+    }, 3000);
+  };
+
+  const renderPaymentForm = () => {
+    switch (paymentMethod) {
+      case 'credit_card':
+        return (
+          <>
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '0.5rem',
+                color: '#666'
+              }}>Card Number</label>
+              <input
+                type="text"
+                name="cardNumber"
+                value={formData.cardNumber}
+                onChange={handleInputChange}
+                required
+                style={{
+                  width: '100%',
+                  padding: '0.8rem',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '8px',
+                  fontSize: '1rem'
+                }}
+              />
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '1rem',
+              marginBottom: '2rem'
+            }}>
+              <div>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '0.5rem',
+                  color: '#666'
+                }}>Expiry Date</label>
+                <input
+                  type="text"
+                  name="expiryDate"
+                  placeholder="MM/YY"
+                  value={formData.expiryDate}
+                  onChange={handleInputChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.8rem',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    fontSize: '1rem'
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '0.5rem',
+                  color: '#666'
+                }}>CVV</label>
+                <div style={{
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}>
+                  <input
+                    type={showCVV ? "text" : "password"}
+                    name="cvv"
+                    value={formData.cvv}
+                    onChange={(e) => {
+                      // Only allow digits and limit to 3-4 characters
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                      handleInputChange({
+                        target: {
+                          name: 'cvv',
+                          value: value
+                        }
+                      });
+                    }}
+                    required
+                    pattern="[0-9]{3,4}"
+                    title="Please enter a valid CVV (3-4 digits)"
+                    style={{
+                      width: '100%',
+                      padding: '0.8rem',
+                      border: '1px solid #e0e0e0',
+                      borderRadius: '8px',
+                      fontSize: '1rem'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCVV(!showCVV)}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#666',
+                      padding: '5px',
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    {showCVV ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+                <p style={{ 
+                  marginTop: '0.5rem', 
+                  fontSize: '0.9rem', 
+                  color: '#666',
+                  fontStyle: 'italic'
+                }}>
+                  Enter 3-4 digit CVV from the back of your card
+                </p>
+              </div>
+            </div>
+          </>
+        );
+
+      case 'upi':
+        return (
+          <div style={{ marginBottom: '2rem' }}>
+            <label style={{
+              display: 'block',
+              marginBottom: '0.5rem',
+              color: '#666'
+            }}>UPI ID</label>
+            <input
+              type="text"
+              name="upiId"
+              placeholder="username@upi"
+              value={formData.upiId}
+              onChange={handleInputChange}
+              required
+              style={{
+                width: '100%',
+                padding: '0.8rem',
+                border: '1px solid #e0e0e0',
+                borderRadius: '8px',
+                fontSize: '1rem'
+              }}
+            />
+            <p style={{ 
+              marginTop: '0.5rem', 
+              fontSize: '0.9rem', 
+              color: '#666',
+              fontStyle: 'italic'
+            }}>
+              Example: username@upi
+            </p>
+          </div>
+        );
+
+      case 'net_banking':
+        return (
+          <>
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '0.5rem',
+                color: '#666'
+              }}>Bank Name</label>
+              <select
+                name="bankName"
+                value={formData.bankName}
+                onChange={handleInputChange}
+                required
+                style={{
+                  width: '100%',
+                  padding: '0.8rem',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '8px',
+                  fontSize: '1rem',
+                  backgroundColor: '#fff'
+                }}
+              >
+                <option value="">Select Bank</option>
+                <option value="hdfc">HDFC Bank</option>
+                <option value="icici">ICICI Bank</option>
+                <option value="sbi">State Bank of India</option>
+                <option value="axis">Axis Bank</option>
+                <option value="kotak">Kotak Mahindra Bank</option>
+              </select>
+            </div>
+            <div style={{ marginBottom: '2rem' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '0.5rem',
+                color: '#666'
+              }}>Account Number</label>
+              <input
+                type="text"
+                name="accountNumber"
+                value={formData.accountNumber}
+                onChange={handleInputChange}
+                required
+                style={{
+                  width: '100%',
+                  padding: '0.8rem',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '8px',
+                  fontSize: '1rem'
+                }}
+              />
+            </div>
+          </>
+        );
+
+      case 'cod':
+        return (
+          <div style={{
+            padding: '1rem',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '8px',
+            marginBottom: '2rem'
+          }}>
+            <p style={{ 
+              margin: 0, 
+              color: '#666',
+              fontSize: '1rem',
+              lineHeight: '1.5'
+            }}>
+              Cash on Delivery is available for orders above $50. 
+              You will be required to pay the full amount in cash when the order is delivered.
+            </p>
+          </div>
+        );
+
+      default:
+        return null;
+    }
   };
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-      {/* Price Counter at the top */}
-      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Total Price: ${totalPrice}</h2>
-        <p style={{ color: '#666' }}>Customized Phone</p>
-      </div>
-
-      {/* Phone Image Display */}
-      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <img
-          src="https://via.placeholder.com/300x600?text=Customized+Phone"
-          alt="Customized Phone"
-          style={{ maxWidth: '100%', height: 'auto', borderRadius: '10px' }}
-        />
-      </div>
-
-      {/* Horizontal Swipe Container for Hardware Options */}
-      <div style={{ overflowX: 'auto', whiteSpace: 'nowrap', marginBottom: '2rem' }}>
-        {Object.keys(hardwareOptions).map(category => (
-          <div
-            key={category}
-            style={{
-              display: 'inline-block',
-              marginRight: '2rem',
-              verticalAlign: 'top',
-              width: '200px'
-            }}
-          >
-            <h3 style={{ textTransform: 'capitalize', marginBottom: '0.5rem' }}>{category}</h3>
-            {hardwareOptions[category].map(option => {
-              // Check if this option is currently selected or hovered.
-              const isSelected = selectedOptions[category].id === option.id;
-              const isHovered =
-                hoveredOption.category === category && hoveredOption.id === option.id;
-
-              return (
-                <div
-                  key={option.id}
-                  onClick={() => handleOptionSelect(category, option)}
-                  onMouseEnter={() => setHoveredOption({ category, id: option.id })}
-                  onMouseLeave={() => setHoveredOption({ category: null, id: null })}
-                  style={{
-                    border: isSelected ? '2px solid #000' : '1px solid #ccc',
-                    backgroundColor: isSelected ? '#f0f0f0' : '#fff',
-                    padding: '1rem',
-                    borderRadius: '10px',
-                    marginBottom: '1rem',
-                    cursor: 'pointer',
-                    transform: isHovered ? 'scale(1.05)' : 'scale(1)',
-                    boxShadow: isHovered ? '0 4px 10px rgba(0,0,0,0.1)' : 'none',
-                    transition: 'transform 0.3s ease, box-shadow 0.3s ease'
-                  }}
-                >
-                  <p style={{ fontWeight: '600', marginBottom: '0.5rem' }}>{option.name}</p>
-                  <p style={{ color: '#666' }}>${option.price}</p>
-                </div>
-              );
-            })}
+    <div style={{
+      padding: '2rem',
+      maxWidth: '1200px',
+      margin: '0 auto',
+      backgroundColor: '#f5f5f5',
+      position: 'relative'
+    }}>
+      {showThankYou && (
+        <div style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          backgroundColor: '#fff',
+          padding: '2rem',
+          borderRadius: '15px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+          zIndex: 1000,
+          textAlign: 'center',
+          maxWidth: '400px',
+          width: '90%'
+        }}>
+          <div style={{
+            fontSize: '3rem',
+            marginBottom: '1rem'
+          }}>
+            🎉
           </div>
-        ))}
-      </div>
-
-      {/* Detailed Description of Selected Options */}
-      <div style={{ marginBottom: '2rem' }}>
-        {Object.keys(selectedOptions).map(category => (
-          <div key={category} style={{ marginBottom: '1.5rem' }}>
-            <h3 style={{ textTransform: 'capitalize', fontWeight: '600', marginBottom: '0.25rem' }}>
-              {category} Details:
-            </h3>
-            <p style={{ fontWeight: '600' }}>{selectedOptions[category].name}</p>
-            <p style={{ color: '#666' }}>{selectedOptions[category].description}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Save Design and Add to Cart Button */}
-      <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-        <button
-          style={{
-            padding: '1rem 2rem',
-            backgroundColor: '#000',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '30px',
-            cursor: 'pointer',
+          <h3 style={{
+            fontSize: '1.8rem',
+            color: '#2c3e50',
+            marginBottom: '1rem'
+          }}>
+            Thank You!
+          </h3>
+          <p style={{
+            color: '#666',
             fontSize: '1.1rem',
-            fontWeight: '600',
-            textTransform: 'uppercase',
-            transition: 'background-color 0.3s ease, transform 0.3s ease'
-          }}
-          onClick={handleSaveDesign}
-          onMouseEnter={e => (e.target.style.transform = 'scale(1.05)')}
-          onMouseLeave={e => (e.target.style.transform = 'scale(1)')}
-        >
-          Save Design and Add to Cart
-        </button>
+            lineHeight: '1.5',
+            marginBottom: '1.5rem'
+          }}>
+            Your order has been placed successfully. 
+            We'll send you an email confirmation shortly.
+          </p>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '1rem'
+          }}>
+            <span style={{
+              fontSize: '1.2rem',
+              color: '#2c3e50',
+              fontWeight: 'bold'
+            }}>
+              ${calculateTotal()}
+            </span>
+            <span style={{
+              color: '#666',
+              fontSize: '1.1rem'
+            }}>
+              has been charged
+            </span>
+          </div>
+        </div>
+      )}
+
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        zIndex: showThankYou ? 999 : -1,
+        transition: 'all 0.3s ease'
+      }} />
+
+      <h2 style={{
+        fontSize: '2rem',
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
+        marginBottom: '2rem',
+        color: '#2c3e50'
+      }}>Checkout</h2>
+
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '2rem'
+      }}>
+        {/* Order Summary */}
+        <div style={{
+          backgroundColor: '#fff',
+          padding: '2rem',
+          borderRadius: '15px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+        }}>
+          <h3 style={{
+            fontSize: '1.5rem',
+            marginBottom: '1.5rem',
+            color: '#2c3e50',
+            borderBottom: '2px solid #f0f0f0',
+            paddingBottom: '0.5rem'
+          }}>Order Summary</h3>
+
+          {selectedPhones.map((phone, index) => (
+            <div key={index} style={{
+              backgroundColor: '#fff',
+              padding: '1.5rem',
+              borderRadius: '10px',
+              marginBottom: '1rem',
+              display: 'flex',
+              gap: '1.5rem',
+              alignItems: 'center'
+            }}>
+              <div style={{
+                width: '120px',
+                height: '120px',
+                borderRadius: '10px',
+                overflow: 'hidden',
+                flexShrink: 0
+              }}>
+                <img 
+                  src={`https://images.unsplash.com/photo-${
+                    phone.camera.id === 3 ? '1585060544812-6b45742d762f' :
+                    phone.processor.id === 1 ? '1592899677977-9c10ca588bbd' :
+                    phone.display.id === 2 ? '1616348436168-de43ad0db179' :
+                    phone.ram.id === 3 ? '1610945415295-d9bbf067e59c' :
+                    phone.rom.id === 3 ? '1574944985070-8f3ebc6b79d2' :
+                    '1598327105666-5b89351aff97'
+                  }?w=500&h=500&fit=crop`}
+                  alt="Phone"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    transition: 'transform 0.3s ease'
+                  }}
+                  onMouseEnter={e => e.target.style.transform = 'scale(1.1)'}
+                  onMouseLeave={e => e.target.style.transform = 'scale(1)'}
+                />
+              </div>
+              
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: '0.5rem',
+                fontSize: '0.9rem',
+                color: '#666',
+                flex: 1
+              }}>
+                <p style={{ margin: 0 }}>📸 {phone.camera.name}</p>
+                <p style={{ margin: 0 }}>🔧 {phone.processor.name}</p>
+                <p style={{ margin: 0 }}>📱 {phone.display.name}</p>
+                <p style={{ margin: 0 }}>💾 {phone.ram.name}</p>
+                <p style={{ margin: 0, gridColumn: '1 / -1' }}>💽 {phone.rom.name}</p>
+              </div>
+            </div>
+          ))}
+
+          <div style={{
+            marginTop: '2rem',
+            padding: '1rem',
+            backgroundColor: '#000000',
+            color: '#fff',
+            borderRadius: '8px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <span style={{ 
+              fontSize: '1.1rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px'
+            }}>Total Amount</span>
+            <span style={{ 
+              fontSize: '1.4rem',
+              fontWeight: 'bold'
+            }}>${calculateTotal()}</span>
+          </div>
+        </div>
+
+        {/* Checkout Form */}
+        <div style={{
+          backgroundColor: '#fff',
+          padding: '2rem',
+          borderRadius: '15px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+        }}>
+          <h3 style={{
+            fontSize: '1.5rem',
+            marginBottom: '1.5rem',
+            color: '#2c3e50',
+            borderBottom: '2px solid #f0f0f0',
+            paddingBottom: '0.5rem'
+          }}>Payment Details</h3>
+
+          <form onSubmit={handleSubmit}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '1rem',
+              marginBottom: '1rem'
+            }}>
+              <div>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '0.5rem',
+                  color: '#666'
+                }}>First Name</label>
+                <input
+                  type="text"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleInputChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.8rem',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    fontSize: '1rem'
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '0.5rem',
+                  color: '#666'
+                }}>Last Name</label>
+                <input
+                  type="text"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleInputChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.8rem',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    fontSize: '1rem'
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '0.5rem',
+                color: '#666'
+              }}>Email</label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                required
+                style={{
+                  width: '100%',
+                  padding: '0.8rem',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '8px',
+                  fontSize: '1rem'
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '0.5rem',
+                color: '#666'
+              }}>Phone Number</label>
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={(e) => {
+                  // Only allow digits and limit to 10 characters
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                  handleInputChange({
+                    target: {
+                      name: 'phone',
+                      value: value
+                    }
+                  });
+                }}
+                required
+                pattern="[0-9]{10}"
+                title="Please enter a valid 10-digit phone number"
+                style={{
+                  width: '100%',
+                  padding: '0.8rem',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '8px',
+                  fontSize: '1rem'
+                }}
+              />
+              <p style={{ 
+                marginTop: '0.5rem', 
+                fontSize: '0.9rem', 
+                color: '#666',
+                fontStyle: 'italic'
+              }}>
+                Please enter a 10-digit phone number
+              </p>
+            </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '0.5rem',
+                color: '#666'
+              }}>Shipping Address</label>
+              <input
+                type="text"
+                name="address"
+                value={formData.address}
+                onChange={handleInputChange}
+                required
+                style={{
+                  width: '100%',
+                  padding: '0.8rem',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '8px',
+                  fontSize: '1rem'
+                }}
+              />
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr 1fr',
+              gap: '1rem',
+              marginBottom: '1rem'
+            }}>
+              <div>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '0.5rem',
+                  color: '#666'
+                }}>City</label>
+                <input
+                  type="text"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleInputChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.8rem',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    fontSize: '1rem'
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '0.5rem',
+                  color: '#666'
+                }}>State</label>
+                <input
+                  type="text"
+                  name="state"
+                  value={formData.state}
+                  onChange={handleInputChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.8rem',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    fontSize: '1rem'
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '0.5rem',
+                  color: '#666'
+                }}>ZIP Code</label>
+                <input
+                  type="text"
+                  name="zipCode"
+                  value={formData.zipCode}
+                  onChange={handleInputChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.8rem',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    fontSize: '1rem'
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '0.5rem',
+                color: '#666'
+              }}>Payment Method</label>
+              <select
+                value={paymentMethod}
+                onChange={handlePaymentMethodChange}
+                style={{
+                  width: '100%',
+                  padding: '0.8rem',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '8px',
+                  fontSize: '1rem',
+                  backgroundColor: '#fff'
+                }}
+              >
+                <option value="credit_card">Credit Card</option>
+                <option value="upi">UPI</option>
+                <option value="net_banking">Net Banking</option>
+                <option value="cod">Cash on Delivery</option>
+              </select>
+            </div>
+
+            {renderPaymentForm()}
+
+            <button
+              type="submit"
+              style={{
+                width: '100%',
+                padding: '1rem',
+                backgroundColor: '#000000',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '1.1rem',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={e => {
+                e.target.style.backgroundColor = '#333333';
+                e.target.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={e => {
+                e.target.style.backgroundColor = '#000000';
+                e.target.style.transform = 'translateY(0)';
+              }}
+            >
+              Place Order
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
 };
 
-export default Customization;
+export default Checkout;
+
+
 
