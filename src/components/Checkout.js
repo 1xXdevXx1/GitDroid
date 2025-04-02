@@ -50,8 +50,15 @@ const Checkout = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setShowThankYou(true);
     
+    // Validate phone number
+    const phoneNumber = formData.phone.replace(/\D/g, ''); // Remove non-digits
+    if (phoneNumber.length !== 10) {
+      alert('Please enter a valid 10-digit phone number');
+      return;
+    }
+    
+    setShowThankYou(true);
     localStorage.removeItem('cart');
     
     setTimeout(() => {
@@ -534,8 +541,19 @@ const Checkout = () => {
                 type="tel"
                 name="phone"
                 value={formData.phone}
-                onChange={handleInputChange}
+                onChange={(e) => {
+                  // Only allow digits and limit to 10 characters
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                  handleInputChange({
+                    target: {
+                      name: 'phone',
+                      value: value
+                    }
+                  });
+                }}
                 required
+                pattern="[0-9]{10}"
+                title="Please enter a valid 10-digit phone number"
                 style={{
                   width: '100%',
                   padding: '0.8rem',
@@ -544,6 +562,14 @@ const Checkout = () => {
                   fontSize: '1rem'
                 }}
               />
+              <p style={{ 
+                marginTop: '0.5rem', 
+                fontSize: '0.9rem', 
+                color: '#666',
+                fontStyle: 'italic'
+              }}>
+                Please enter a 10-digit phone number
+              </p>
             </div>
 
             <div style={{ marginBottom: '1rem' }}>
@@ -699,6 +725,4 @@ const Checkout = () => {
 };
 
 export default Checkout;
-
-
 
