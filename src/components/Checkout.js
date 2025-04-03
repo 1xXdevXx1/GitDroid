@@ -23,6 +23,7 @@ const Checkout = () => {
     bankName: '',
     accountNumber: ''
   });
+  const [showCVV, setShowCVV] = useState(false);
 
   useEffect(() => {
     if (location.state?.selectedPhones) {
@@ -55,6 +56,13 @@ const Checkout = () => {
     const phoneNumber = formData.phone.replace(/\D/g, ''); // Remove non-digits
     if (phoneNumber.length !== 10) {
       alert('Please enter a valid 10-digit phone number');
+      return;
+    }
+
+    // Validate CVV
+    const cvv = formData.cvv.replace(/\D/g, '');
+    if (cvv.length < 3 || cvv.length > 4) {
+      alert('Please enter a valid CVV (3-4 digits)');
       return;
     }
     
@@ -127,20 +135,61 @@ const Checkout = () => {
                   marginBottom: '0.5rem',
                   color: '#666'
                 }}>CVV</label>
-                <input
-                  type="text"
-                  name="cvv"
-                  value={formData.cvv}
-                  onChange={handleInputChange}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '0.8rem',
-                    border: '1px solid #e0e0e0',
-                    borderRadius: '8px',
-                    fontSize: '1rem'
-                  }}
-                />
+                <div style={{
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}>
+                  <input
+                    type={showCVV ? "text" : "password"}
+                    name="cvv"
+                    value={formData.cvv}
+                    onChange={(e) => {
+                      // Only allow digits and limit to 3-4 characters
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                      handleInputChange({
+                        target: {
+                          name: 'cvv',
+                          value: value
+                        }
+                      });
+                    }}
+                    required
+                    pattern="[0-9]{3,4}"
+                    title="Please enter a valid CVV (3-4 digits)"
+                    style={{
+                      width: '100%',
+                      padding: '0.8rem',
+                      border: '1px solid #e0e0e0',
+                      borderRadius: '8px',
+                      fontSize: '1rem'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCVV(!showCVV)}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#666',
+                      padding: '5px',
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    {showCVV ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+                <p style={{ 
+                  marginTop: '0.5rem', 
+                  fontSize: '0.9rem', 
+                  color: '#666',
+                  fontStyle: 'italic'
+                }}>
+                  Enter 3-4 digit CVV from the back of your card
+                </p>
               </div>
             </div>
           </>
@@ -725,4 +774,6 @@ const Checkout = () => {
 };
 
 export default Checkout;
+
+
 
